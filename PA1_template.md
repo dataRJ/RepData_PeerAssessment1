@@ -72,6 +72,7 @@ max_steps_interval
 ```
 
 ## Imputing missing values
+In order to evaluate the effect of replacing missing data we will go through the original activity data and replace the NA values for steps with the mean value for that specific time interval.
 
 ```r
 sum(is.na(activity$steps))
@@ -87,14 +88,25 @@ imputed_activity <- mutate(imputed_activity, steps2 = ifelse(is.na(steps), mean_
 
 imputed_activity <- select(imputed_activity,-steps, -mean_steps )
 names(imputed_activity) <- c("interval","date","steps")
+```
+Now we check to ensure that we no longer have any entries where there are NA values for steps.
 
+```r
+sum(is.na(imputed_activity$steps))
+```
+
+```
+## [1] 0
+```
+
+```r
 daily_activity_imp <- group_by(imputed_activity,date)
 steps_day_imp <- summarise(daily_activity_imp, sum(steps, na.rm=TRUE) )
 names(steps_day_imp) <- c("date","steps")
 hist(steps_day_imp$steps, main="Steps Per Day", xlab="Steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
 
 ```r
 mean(steps_day_imp$steps)
@@ -135,4 +147,4 @@ names(steps_dow_imp) <- c("dow","interval","steps")
 xyplot(steps ~ interval | dow, data=steps_dow_imp, layout=c(1,2), type="l")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png) 

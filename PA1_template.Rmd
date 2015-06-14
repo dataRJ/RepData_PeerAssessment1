@@ -54,6 +54,7 @@ max_steps_interval
 ```
 
 ## Imputing missing values
+In order to evaluate the effect of replacing missing data we will go through the original activity data and replace the NA values for steps with the mean value for that specific time interval.
 ```{r}
 sum(is.na(activity$steps))
 
@@ -62,6 +63,10 @@ imputed_activity <- mutate(imputed_activity, steps2 = ifelse(is.na(steps), mean_
 
 imputed_activity <- select(imputed_activity,-steps, -mean_steps )
 names(imputed_activity) <- c("interval","date","steps")
+```
+Now we check to ensure that we no longer have any entries where there are NA values for steps.
+```{r echo=TRUE}
+sum(is.na(imputed_activity$steps))
 
 daily_activity_imp <- group_by(imputed_activity,date)
 steps_day_imp <- summarise(daily_activity_imp, sum(steps, na.rm=TRUE) )

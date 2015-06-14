@@ -106,15 +106,18 @@ text(max_steps_interval$interval + 375, max_steps_interval$steps,paste(&quot;Max
 </div>
 <div id="imputing-missing-values" class="section level2">
 <h2>Imputing missing values</h2>
+<p>In order to evaluate the effect of replacing missing data we will go through the original activity data and replace the NA values for steps with the mean value for that specific time interval.</p>
 <pre class="r"><code>sum(is.na(activity$steps))</code></pre>
 <pre><code>## [1] 2304</code></pre>
 <pre class="r"><code>imputed_activity &lt;- merge(activity, interval_mean, by.x=&quot;interval&quot;, by.y=&quot;interval&quot;)
 imputed_activity &lt;- mutate(imputed_activity, steps2 = ifelse(is.na(steps), mean_steps, steps))
 
 imputed_activity &lt;- select(imputed_activity,-steps, -mean_steps )
-names(imputed_activity) &lt;- c(&quot;interval&quot;,&quot;date&quot;,&quot;steps&quot;)
-
-daily_activity_imp &lt;- group_by(imputed_activity,date)
+names(imputed_activity) &lt;- c(&quot;interval&quot;,&quot;date&quot;,&quot;steps&quot;)</code></pre>
+<p>Now we check to ensure that we no longer have any entries where there are NA values for steps.</p>
+<pre class="r"><code>sum(is.na(imputed_activity$steps))</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>daily_activity_imp &lt;- group_by(imputed_activity,date)
 steps_day_imp &lt;- summarise(daily_activity_imp, sum(steps, na.rm=TRUE) )
 names(steps_day_imp) &lt;- c(&quot;date&quot;,&quot;steps&quot;)
 hist(steps_day_imp$steps, main=&quot;Steps Per Day&quot;, xlab=&quot;Steps&quot;)</code></pre>
