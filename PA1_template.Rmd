@@ -8,11 +8,12 @@ output:
 ## Loading and preprocessing the data
 ```{r echo=TRUE,message=FALSE}
 library(dplyr)
+library(lattice)
 activity <- tbl_df(read.csv(unz("activity.zip","activity.csv")))
 daily_activity <- group_by(activity,date)
 interval_activity <- group_by(activity,interval)
 interval_mean <- summarise(interval_activity, mean(steps, na.rm=TRUE))
-names(interval_mean) = c("interval","steps")
+names(interval_mean) = c("interval","mean_steps")
 
 ```
 
@@ -27,7 +28,6 @@ hist(steps_day$steps, main="Steps Per Day", xlab="Steps")
 The mean number of steps per day was:
 ```{r echo=TRUE}
 mean(steps_day$steps)
-
 ```
 
 The mediam number of steps per day was:
@@ -57,13 +57,11 @@ max_steps_interval
 ```{r}
 sum(is.na(activity$steps))
 
-imputed_activity <- mutate(activity, steps2 = ifelse(is.na(steps),
-                          interval_mean[interval_mean$interval == interval,2][[1]],
-                          steps))
+imputed_activity <- merge(activity, interval_mean, by.x="interval", by.y="interval")
+imputed_activity <- mutate(imputed_activity, steps2 = ifelse(is.na(steps), mean_steps, steps))
 
-
-imputed_activity <- select(imputed_activity,-steps )
-names(imputed_activity) <- c("date","interval","steps")
+imputed_activity <- select(imputed_activity,-steps, -mean_steps )
+names(imputed_activity) <- c("interval","date","steps")
 
 daily_activity_imp <- group_by(imputed_activity,date)
 steps_day_imp <- summarise(daily_activity_imp, sum(steps, na.rm=TRUE) )
@@ -74,6 +72,24 @@ median(steps_day_imp$steps)
 
 ```
 
-When looking at the data with na values in the dataset for steps replaced with the mean value for that specific time interval the values are not greatly different.  The histogram of the data doesn't show that the interval for 5000 - 10,000 steps per 
+When looking at the data with na values in the dataset for steps replaced with the mean value for that specific time interval the values are affecte at the lower end of the steps per day.  The histogram of the data shows that the interval for 5000 steps per day is much  different than it was without this data replacement.
+
+In addition if you compare the mean and median values you can see that values aren't too much different.
+
+Data Type     |Mean Steps Per Day| Median Steps Per Day
+--------------|------------------|-----------------------
+With NA       |9354.23           |  10395
+Impute Values |10766.19          |  10766.19
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+imp_activity_days <- mutate(imputed_activity, dow = 
+                              ifelse(weekdays(as.Date(activity$date,"%Y-%m-%d")) %in%
+                                       c("Saturday","Sunday"), "weekend","weekday"))
+
+imp_activity_days$dow = as.factor(imp_activity_days$dow)
+dow_interval_imp <- group_by(imp_activity_days,dow,interval)
+steps_dow_imp <- summarise(dow_interval_imp, mean(steps))
+names(steps_dow_imp) <- c("dow","interval","steps")
+xyplot(steps ~ interval | dow, data=steps_dow_imp, layout=c(1,2), type="l")
+```
