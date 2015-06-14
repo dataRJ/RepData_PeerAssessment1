@@ -5,21 +5,75 @@ output:
     keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
+```{r echo=TRUE,message=FALSE}
+library(dplyr)
+activity <- tbl_df(read.csv(unz("activity.zip","activity.csv")))
+daily_activity <- group_by(activity,date)
+interval_activity <- group_by(activity,interval)
+interval_mean <- summarise(interval_activity, mean(steps, na.rm=TRUE))
+names(interval_mean) = c("interval","steps")
 
+```
 
 
 ## What is mean total number of steps taken per day?
+```{r}
+steps_day <- summarise(daily_activity, sum(steps, na.rm=TRUE) )
+names(steps_day) <- c("date","steps")
+hist(steps_day$steps, main="Steps Per Day", xlab="Steps")
+```
 
+The mean number of steps per day was:
+```{r echo=TRUE}
+mean(steps_day$steps)
+
+```
+
+The mediam number of steps per day was:
+```{r echo=TRUE}
+median(steps_day$steps)
+```
 
 
 ## What is the average daily activity pattern?
+```{r}
+steps_interval <- summarise(interval_activity, mean(steps, na.rm=TRUE))
+names(steps_interval) <- c("interval","steps")
+max_steps_interval = filter(steps_interval, steps == max(steps_interval$steps))
+plot(steps_interval$interval,steps_interval$steps, type="l", xlab="Interval", 
+     ylab="Average Steps", main="Steps Per Interval")
+points(max_steps_interval)
+text(max_steps_interval$interval + 375, max_steps_interval$steps,paste("Max Interval: ", max_steps_interval$interval))
 
+```
 
+As seen on the line chart the 5 minute interval with the maximum average number of steps per day was:
+```{r echo=TRUE}
+max_steps_interval
+```
 
 ## Imputing missing values
+```{r}
+sum(is.na(activity$steps))
+
+imputed_activity <- mutate(activity, steps2 = ifelse(is.na(steps),
+                          interval_mean[interval_mean$interval == interval,2][[1]],
+                          steps))
 
 
+imputed_activity <- select(imputed_activity,-steps )
+names(imputed_activity) <- c("date","interval","steps")
+
+daily_activity_imp <- group_by(imputed_activity,date)
+steps_day_imp <- summarise(daily_activity_imp, sum(steps, na.rm=TRUE) )
+names(steps_day_imp) <- c("date","steps")
+hist(steps_day_imp$steps, main="Steps Per Day", xlab="Steps")
+mean(steps_day_imp$steps)
+median(steps_day_imp$steps)
+
+```
+
+When looking at the data with na values in the dataset for steps replaced with the mean value for that specific time interval the values are not greatly different.  The histogram of the data doesn't show that the interval for 5000 - 10,000 steps per 
 
 ## Are there differences in activity patterns between weekdays and weekends?
